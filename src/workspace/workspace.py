@@ -6,5 +6,5 @@ class Workspace():
     center = Point3d(0.0, 0.0, 0.0)
     width = 0
     length = 0
-    bags = Bag[...]
+    bags = []
     partitions = 1

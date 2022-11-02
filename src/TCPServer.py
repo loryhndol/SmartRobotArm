@@ -1,7 +1,8 @@
-from channel import ioChannel, Endpoint
+from channel.iochannel import ioChannel
+from channel.endpoint import Endpoint
+from utility.point3d import Point3d
 import socket
 import numpy as np
-from utility.point3d import Point3d
 
 
 class TCPServer():

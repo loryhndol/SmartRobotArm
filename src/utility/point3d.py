@@ -4,3 +4,8 @@ class Point3d():
         self.x = nx
         self.y = ny
         self.z = nz
+
+    def __format__(self, __format_spec: str) -> str:
+        if __format_spec == "":
+            return str(self)
+        return "(%f, %f, %f)".format(self.x, self.y, self.z)

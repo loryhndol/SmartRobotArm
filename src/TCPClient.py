@@ -1,4 +1,5 @@
-from channel import ioChannel, Endpoint
+from channel.iochannel import ioChannel
+from channel.endpoint import Endpoint
 
 
 class TCPClient():

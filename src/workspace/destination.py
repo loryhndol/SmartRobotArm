@@ -1,4 +1,4 @@
-from workspace import Workspace
+from workspace.workspace import Workspace
 
 
 class Destination(Workspace):
