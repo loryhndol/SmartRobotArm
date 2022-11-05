@@ -1,3 +1,10 @@
+import sys, os
+
+sys.path.extend([
+    os.path.join(root, name) for root, dirs, _ in os.walk("../")
+    for name in dirs
+])
+
 from channel.iochannel import ioChannel
 from channel.endpoint import Endpoint
 from utility.point3d import Point3d
@@ -10,7 +17,8 @@ class MockServer():
     arm_position = Point3d(0.0, 0.0, 0.0)
 
     def __init__(self, listenfd, connfd) -> None:
-        print("Server is starting")
+        print("Server is starting, listenfd: {}, connfd: {}".format(
+            listenfd, connfd))
         self.listenfd = listenfd
         self.connfd = connfd
         self.ch = ioChannel(Endpoint(self.connfd))
@@ -20,7 +28,7 @@ class MockServer():
         self.arm_position = A
         self.arm_position = B
 
-    def move_to(self, dst):
+    def move_to(self, dst: Point3d):
         print("-> {}".format(dst))
         self.arm_position = dst
         return self
@@ -38,8 +46,8 @@ class MockServer():
         pass
 
     def reset_position(self):
-        print("reset position to: (0.0, 0.0, 0.0)")
-        self.arm_position = Point3d(0.0, 0.0, 0.0)
+        self.arm_position = Point3d(400, 0, 230)
+        print("reset position to: {}".format(self.arm_position))
 
     def action(self):
         for _ in range(5):
@@ -47,10 +55,8 @@ class MockServer():
             B = Point3d(76, -391, 230)
             C = Point3d(76, -391, 80)
             D = Point3d(81, 391, 230)
-            forward = self.move_to(A).move_to(B).move_to(C).move_to(D)
-            backward = self.move_to(D).move_to(C).move_to(B).move_to(A)
-            forward()
-            backward()
+            self.move_to(A).move_to(B).move_to(C).move_to(D)
+            self.move_to(D).move_to(C).move_to(B).move_to(A)
 
     def event_loop(self):
         while True:
@@ -58,10 +64,15 @@ class MockServer():
             print('get data:' + dat)
 
             if dat == "1":
-                self.action(self.connfd)
+                self.action()
             elif dat == '2':  # 初始化位姿
                 self.reset_position()
 
             else:
                 print("close")
                 break
+
+
+if __name__ == '__main__':
+    serv = MockServer(10, 13)
+    serv.event_loop()

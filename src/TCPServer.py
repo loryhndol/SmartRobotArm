@@ -1,7 +1,7 @@
 from channel.iochannel import ioChannel
 from channel.endpoint import Endpoint
 from utility.point3d import Point3d
-from workspace import Repository, Destination
+import workspace as ws
 import socket
 import numpy as np
 
@@ -12,8 +12,8 @@ class TCPServer():
     max_conn = 5
     target = 200  # 200g 重物
     eps = 10  # +-10g 误差
-    dest = Destination()
-    repo = Repository()
+    dest = ws.Destination()
+    repo = ws.Repository()
 
     def __init__(self) -> None:
         print("Server is starting")
@@ -61,10 +61,8 @@ class TCPServer():
             B = Point3d(76, -391, 230)
             C = Point3d(76, -391, 80)
             D = Point3d(81, 391, 230)
-            forward = self.move_to(A).move_to(B).move_to(C).move_to(D)
-            backward = self.move_to(D).move_to(C).move_to(B).move_to(A)
-            forward()
-            backward()
+            self.move_to(A).move_to(B).move_to(C).move_to(D)
+            self.move_to(D).move_to(C).move_to(B).move_to(A)
 
     def feedback():
         pass
