@@ -1,4 +1,5 @@
 import socket
+from endpoint import Endpoint
 
 
 class iChannel():
@@ -15,7 +16,7 @@ class oChannel():
 
 class ioChannel(iChannel, oChannel):
 
-    def __init__(self, endpoint) -> None:
+    def __init__(self, endpoint: Endpoint) -> None:
         super().__init__()
         self.endpoint = endpoint
 

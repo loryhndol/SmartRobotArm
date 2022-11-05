@@ -1,6 +1,7 @@
 from channel.iochannel import ioChannel
 from channel.endpoint import Endpoint
 from utility.point3d import Point3d
+from workspace import Repository, Destination
 import socket
 import numpy as np
 
@@ -9,6 +10,10 @@ class TCPServer():
     ip = '192.168.31.76'
     port = 8888
     max_conn = 5
+    target = 200  # 200g 重物
+    eps = 10  # +-10g 误差
+    dest = Destination()
+    repo = Repository()
 
     def __init__(self) -> None:
         print("Server is starting")
@@ -22,15 +27,15 @@ class TCPServer():
         self.connfd.settimeout(50)
         self.ch = ioChannel(Endpoint(self.connfd))
 
-    def move(self, A, B):
+    def move(self, A: Point3d, B: Point3d):
         dType.SetPTPCmdSync(api, 1, A.x, A.y, A.z, 0, 1)
         dType.SetPTPCmdSync(api, 1, B.x, B.y, B.z, 0, 1)
 
-    def move_to(self, dst):
+    def move_to(self, dst: Point3d):
         dType.SetPTPCmdSync(api, 1, dst.x, dst.y, dst.z, 0, 1)
         return self
 
-    def choose(self, weight):
+    def choose(self, ID: int):
         pass
 
     def release(self):
@@ -61,25 +66,53 @@ class TCPServer():
             forward()
             backward()
 
+    def feedback():
+        pass
+
     def event_loop(self):
+        """机械臂事件循环
+        
+        循环:
+            当前位置: 出发地
+
+              1. 通过相机确认重物位置
+              2. 计算出需要抓取哪一个重物
+              3. 抓取重物
+
+            从出发地移动到目的地
+
+            当前位置: 目的地
+
+              1. 通过相机确认摆放位置
+              2. 放下重物
+              3. 计算反馈信息
+
+            机械臂返回出发地
+        
+        """
         try:
             while True:
-                #接收数据
-                #recv data
-                buf = self.ch.recv(1024)
-                dat = buf.decode('UTF-8', 'strict')
-                print('get data:' + dat)
+                img = self.camera.get_img()
+                self.ch.send(img)
+                locations: list[Point3d] = []
+                self.ch.sync_recv(locations)
 
-                if dat == "1":
-                    self.action(self.connfd)
-                    server_array = np.array([1.3, 2.01, 3])
-                    self.ch.send(server_array)
-                elif dat != '0':  # 初始化位姿
-                    self.reset_position()
+                item_id = self.strategy(locations)
 
-                else:
-                    print("close")
-                    break
+                self.choose(item_id)
+
+                self.move_to(self.dest.center)
+
+                img = self.camera.get_img()
+                self.ch.send(img)
+                self.ch.sync_recv(locations)
+
+                self.release(locations)
+
+                self.feedback()
+
+                self.move_to(self.repo.center)
+
         except socket.timeout:
             print('time out')
             print("closing one connection")

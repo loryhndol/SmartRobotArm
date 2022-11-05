@@ -1,6 +1,6 @@
 class Endpoint():
 
-    def __init__(self, ip, port) -> None:
+    def __init__(self, ip: str, port: int) -> None:
         self.ip = ip
         self.port = port
 
