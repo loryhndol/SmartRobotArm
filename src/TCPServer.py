@@ -1,11 +1,11 @@
 from channel.iochannel import ioChannel
 from channel.endpoint import Endpoint
 from utility.point3d import Point3d
-import sensors
-import workspace as ws
-import socket
-import numpy as np
 from ServerOptions import ServerOptions
+import workspace as ws
+import sensors
+
+import socket
 
 
 class TCPServer():
@@ -24,7 +24,8 @@ class TCPServer():
         self.connfd.settimeout(50)
         self.ch = ioChannel(Endpoint(self.connfd))
         print("checking IO devices...")
-        self.camera = sensors.Camera(self.options.io_ports['camera'])
+        self.camera = sensors.Camera(self.options.io_ports['camera'],
+                                     Point3d(0.0, 0.0, 0.0), 1.0, 100, 100)
         self.picker = sensors.Picker(self.options.io_ports['picker'])
         self.weight_sensor = sensors.WeightSensor(
             self.options.io_ports['weight_sensor'])

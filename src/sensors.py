@@ -2,20 +2,28 @@ from utility.point3d import Point3d
 
 
 class Sensor():
-    IO_port = -1
+
+    def __init__(self, port) -> None:
+        self.IO_port = port
 
 
 class Camera(Sensor):
-    camera_pos = Point3d(0.0, 0.0, 0.0)
-    focal_len = 1.0
-    width = 100
-    height = 100
+
+    def __init__(self, port, position, focal_length, width, height) -> None:
+        super().__init__(port)
+        self.position = position
+        self.focal_len = focal_length
+        self.width = width
+        self.height = height
 
     def get_image():
         pass
 
 
 class Picker(Sensor):
+
+    def __init__(self, port) -> None:
+        super().__init__(port)
 
     def pick():
         pass
@@ -25,6 +33,9 @@ class Picker(Sensor):
 
 
 class WeightSensor(Sensor):
+
+    def __init__(self, port) -> None:
+        super().__init__(port)
 
     def get_weight():
         pass
