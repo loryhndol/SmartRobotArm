@@ -7,10 +7,6 @@ class Bag():
     center = Point3d(0.0, 0.0, 0.0)
 
 
-class BagInfo():
-    pass
-
-
 class Workspace():
     center = Point3d(0.0, 0.0, 0.0)
     width = 0

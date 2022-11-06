@@ -1,5 +1,6 @@
 import socket
 from endpoint import Endpoint
+import pickle
 
 
 class iChannel():
@@ -24,8 +25,11 @@ class ioChannel(iChannel, oChannel):
         self.sockfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sockfd.connect((self.endpoint.ip, self.endpoint.port))
 
-    def send(self):
-        self.sockfd.send()
+    def send(self, content):
+        msg = pickle.dumps(content)
+        self.sockfd.send(msg)
 
     def sync_recv(self):
-        self.sockfd.recv()
+        msg = self.sockfd.recv()
+        content = pickle.loads(msg)
+        return content

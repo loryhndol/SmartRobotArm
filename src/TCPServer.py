@@ -1,21 +1,18 @@
 from channel.iochannel import ioChannel
 from channel.endpoint import Endpoint
 from utility.point3d import Point3d
+import sensors
 import workspace as ws
 import socket
 import numpy as np
+from ServerOptions import ServerOptions
 
 
 class TCPServer():
-    ip = '192.168.31.76'
-    port = 8888
-    max_conn = 5
-    target = 200  # 200g 重物
-    eps = 10  # +-10g 误差
-    dest = ws.Destination()
-    repo = ws.Repository()
 
     def __init__(self) -> None:
+        self.options = ServerOptions()
+        print('Server Options:{}'.format(self.options))
         print("Server is starting")
         self.listenfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listenfd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -26,6 +23,13 @@ class TCPServer():
         self.connfd, self.ip_addr = self.listenfd.accept()
         self.connfd.settimeout(50)
         self.ch = ioChannel(Endpoint(self.connfd))
+        print("checking IO devices...")
+        self.camera = sensors.Camera(self.options.io_ports['camera'])
+        self.picker = sensors.Picker(self.options.io_ports['picker'])
+        self.weight_sensor = sensors.WeightSensor(
+            self.options.io_ports['weight_sensor'])
+
+        self.arm_position = self.get_position()
 
     def move(self, A: Point3d, B: Point3d):
         dType.SetPTPCmdSync(api, 1, A.x, A.y, A.z, 0, 1)
@@ -36,16 +40,21 @@ class TCPServer():
         return self
 
     def choose(self, ID: int):
-        pass
+        self.picker.pick()
 
     def release(self):
-        pass
+        self.picker.unpick()
 
     def get_position(self):
         pass
 
-    def strategy(self):
-        pass
+    def strategy(self, items_in_view: list[ws.Bag]) -> int:
+        for id, bag in enumerate(items_in_view):
+            lookahead_weight = self.total_weight + bag.weight
+
+            if lookahead_weight < self.target:
+                return id
+        return -1
 
     def reset_position(self):
         dType.SetArmOrientation(api, 0, 1)
@@ -92,24 +101,28 @@ class TCPServer():
             while True:
                 img = self.camera.get_img()
                 self.ch.send(img)
-                locations: list[Point3d] = []
-                self.ch.sync_recv(locations)
+                items_in_view: list[ws.Bag] = []
+                self.ch.sync_recv(items_in_view)
 
-                item_id = self.strategy(locations)
+                item_id = self.strategy(items_in_view)
+                if item_id != -1:
+                    self.choose(item_id)
 
-                self.choose(item_id)
+                    self.move_to(self.dest.center)
 
-                self.move_to(self.dest.center)
+                    img = self.camera.get_img()
+                    self.ch.send(img)
+                    locations: list[Point3d] = []
+                    self.ch.sync_recv(locations)
 
-                img = self.camera.get_img()
-                self.ch.send(img)
-                self.ch.sync_recv(locations)
+                    self.release(locations)
 
-                self.release(locations)
+                    self.feedback()
 
-                self.feedback()
-
-                self.move_to(self.repo.center)
+                    self.move_to(self.repo.center)
+                else:
+                    print('unable to find a suitable item')
+                    break
 
         except socket.timeout:
             print('time out')
