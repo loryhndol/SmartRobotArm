@@ -26,6 +26,7 @@ class Bag():
         self.ID = id
         self.weight = weight
         self.center = center
+        self.empty = False
 
 
 class Workspace():
@@ -89,10 +90,29 @@ class Workspace():
         )
 
     def top(self, row, col) -> Bag or None:
-        raise Exception("implement top() at workspace.py")
+        for g in range(self.partition[2] - 1, 0, -1):
+            warp_size = self.partition[0] * self.partition[1]
+            idx = g * warp_size + row * self.partition[0] + col
+            if idx >= len(self.bags):
+                continue
+            if self.bags[idx].empty:
+                continue
+            else:
+                self.bags[idx].empty = True
+                return self.bags[idx]
+        return None
 
-    def use(self, Bag: Bag):
-        raise Exception("implement use() at workspace.py")
+    def peek(self, row, col) -> bool:
+        for g in range(self.partition[2] - 1, 0, -1):
+            warp_size = self.partition[0] * self.partition[1]
+            idx = g * warp_size + row * self.partition[0] + col
+            if idx >= len(self.bags):
+                continue
+            if self.bags[idx].empty:
+                continue
+            else:
+                return True
+        return False
 
 
 class Repository(Workspace):
