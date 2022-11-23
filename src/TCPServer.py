@@ -31,6 +31,8 @@ class TCPServer():
             self.options.io_ports['weight_sensor'])
 
         self.arm_position = self.get_position()
+        dType.SetArmOrientation(api, 0, 1)
+        dType.SetPTPCommonParamsSync(api, 30, 30)
 
     def move(self, A: Point3d, B: Point3d):
         dType.SetPTPCmdSync(api, 1, A.x, A.y, A.z, 0, 1)

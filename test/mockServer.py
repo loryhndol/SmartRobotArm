@@ -5,6 +5,7 @@ sys.path.extend([
     for name in dirs
 ])
 
+import workspace as ws
 from channel.iochannel import ioChannel
 from channel.endpoint import Endpoint
 from utility.point3d import Point3d
@@ -42,15 +43,20 @@ class MockServer():
     def get_position(self):
         pass
 
-    def strategy(self):
-        pass
+    def strategy(self, items_in_view: list[ws.Bag]) -> int:
+        for id, bag in enumerate(items_in_view):
+            lookahead_weight = self.total_weight + bag.weight
+
+            if lookahead_weight < self.target:
+                return id
+        return -1
 
     def reset_position(self):
         self.arm_position = Point3d(400, 0, 230)
         print("reset position to: {}".format(self.arm_position))
 
     def action(self):
-        for _ in range(5):
+        for _ in range(2):
             A = Point3d(81, 391, 80)
             B = Point3d(76, -391, 230)
             C = Point3d(76, -391, 80)
