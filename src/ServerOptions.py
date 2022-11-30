@@ -13,14 +13,19 @@ class ServerOptions():
     io_ports = {'camera': -1, 'picker': -1, 'weight_sensor': -1}
 
     def __format__(self, __format_spec: str) -> str:
-        print("location: {}:{}".format(self.ip, self.port))
-        print("max_conn: {}".format(self.max_conn))
-        print("task:")
-        for k, v in self.task:
-            print("- {}: {}".format(k, v))
-        print("coordinates:")
-        for k, v in self.coords:
-            print("- {}: {}".format(k, v))
-        print("IO Ports:")
-        for k, v in self.io_ports:
-            print("- {}: {}".format(k, v))
+        loc = "location: {}:{}\n".format(self.ip, self.port)
+        max_conn = "max_conn: {}\n".format(self.max_conn)
+        task = "task:\n"
+        for k, v in self.task.items():
+            task += "- {}: {}".format(k, v)
+            task += "\n"
+        coords = "coordinates:\n"
+        for k, v in self.coords.items():
+            coords += "- {}: {}".format(k, v)
+            coords += "\n"
+        io_ports = "IO Ports:\n"
+        for k, v in self.io_ports.items():
+            io_ports += "- {}: {}".format(k, v)
+            io_ports += "\n"
+
+        return loc + max_conn + coords + io_ports

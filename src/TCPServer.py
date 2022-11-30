@@ -16,10 +16,10 @@ class TCPServer():
         print("Server is starting")
         self.listenfd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listenfd.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listenfd.bind((self.ip, self.port))
+        self.listenfd.bind((self.options.ip, self.options.port))
         self.listenfd.listen(5)
         print("Server is listenting port {}, with max connection {}".format(
-            self.port, self.max_conn))
+            self.options.port, self.options.max_conn))
         self.connfd, self.ip_addr = self.listenfd.accept()
         self.connfd.settimeout(50)
         self.ch = ioChannel(Endpoint(self.connfd))
@@ -55,16 +55,14 @@ class TCPServer():
     def strategy_single(self, items_in_view: list[ws.Bag]) -> tuple[int, bool]:
         finished = False
         ret = -1
-        for id, item in enumerate(items_in_view):
-            lookahead = cur_weight + item.weight
+        for item in items_in_view:
+            lookahead = self.cur_weight + item.weight
             if lookahead < self.target + self.eps:
-                cur_weight += item.weight
+                self.cur_weight += item.weight
                 if lookahead > self.target - self.eps:
                     finished = True
-                    ret = id
-                    break
-            else:
-                ret = id
+
+                ret = item.ID
                 break
 
         return ret, finished
