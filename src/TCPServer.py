@@ -51,13 +51,23 @@ class TCPServer():
     def get_position(self):
         pass
 
-    def strategy(self, items_in_view: list[ws.Bag]) -> int:
-        for id, bag in enumerate(items_in_view):
-            lookahead_weight = self.total_weight + bag.weight
+    # 第一种策略，一次只返回一个id
+    def strategy_single(self, items_in_view: list[ws.Bag]) -> tuple[int, bool]:
+        finished = False
+        ret = -1
+        for id, item in enumerate(items_in_view):
+            lookahead = cur_weight + item.weight
+            if lookahead < self.target + self.eps:
+                cur_weight += item.weight
+                if lookahead > self.target - self.eps:
+                    finished = True
+                    ret = id
+                    break
+            else:
+                ret = id
+                break
 
-            if lookahead_weight < self.target:
-                return id
-        return -1
+        return ret, finished
 
     def reset_position(self):
         dType.SetArmOrientation(api, 0, 1)
@@ -102,27 +112,47 @@ class TCPServer():
         """
         try:
             while True:
-                img = self.camera.get_img()
-                self.ch.send(img)
-                items_in_view: list[ws.Bag] = []
-                self.ch.sync_recv(items_in_view)
 
-                item_id = self.strategy(items_in_view)
+                # 服务器发送给客户端出发地照片
+                img = self.camera.get_image()
+                self.ch.send(img)
+
+                # 客户端通过视觉算法处理照片得到物品的坐标
+                # 客户端将物品的坐标发送给服务器
+                items_coords: list[Point3d] = []
+                self.ch.sync_recv(items_coords)
+
+                # 服务器接收到物品的坐标之后，对每一个物品进行称重
+                # 根据重量传感器的结果得到每个物品的重量
+                items_in_view: list[ws.Bag] = []
+                for id, coord in enumerate(items_coords):
+                    w = self.get_weight(coord)
+                    items_in_view.append(ws.Bag(id, w, coord))
+
+                # 然后服务器计算出最优选的物品选择并检测是否达到目标
+                item_id, finished = self.strategy_single(items_in_view)
+                if finished:
+                    print("finished.")
+                    break
                 if item_id != -1:
                     self.choose(item_id)
 
-                    self.move_to(self.dest.center)
+                    self.move_to(self.destination.center)
 
-                    img = self.camera.get_img()
+                    # 服务器拍照发送给客户端
+                    img = self.camera.get_image()
                     self.ch.send(img)
+
+                    # 客户端计算出目的地坐标发送给服务器
                     locations: list[Point3d] = []
                     self.ch.sync_recv(locations)
 
+                    # 服务器将重物放下
                     self.release(locations)
 
-                    self.feedback()
+                    # 服务器返回出发地
+                    self.move_to(self.repository.center)
 
-                    self.move_to(self.repo.center)
                 else:
                     print('unable to find a suitable item')
                     break

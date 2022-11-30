@@ -16,7 +16,7 @@ class Camera(Sensor):
         self.width = width
         self.height = height
 
-    def get_image():
+    def get_image(self):
         pass
 
 

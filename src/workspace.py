@@ -114,10 +114,14 @@ class Workspace():
                 return True
         return False
 
-
-class Repository(Workspace):
-    pass
-
-
-class Destination(Workspace):
-    current_weight = 0
+    def peek2(self, row, col) -> Bag or None:
+        for g in range(self.partition[2] - 1, 0, -1):
+            warp_size = self.partition[0] * self.partition[1]
+            idx = g * warp_size + row * self.partition[0] + col
+            if idx >= len(self.bags):
+                continue
+            if self.bags[idx].empty:
+                continue
+            else:
+                return self.bags[idx]
+        return None
